@@ -1,0 +1,18 @@
+### A (potential) fix for the late-join desync bug
+
+Casualties: Unknown multiplayer mod: https://www.nexusmods.com/scavprototype/mods/67
+
+Lazy, potentially buggy, fix for the bug where players who joined mid-layer cannot be spectated, their distance isn't shown on the pause screen, and their death doesn't register on the sidebar.
+
+*This mod is experimental!*
+
+#### Installation
+
+1. Download CasualtiesTogetherLateJoinFix.zip from [Releases](https://github.com/Voxeles/CasualtiesTogetherLateJoinFix/releases)
+2. Extract CasualtiesTogetherLateJoinFix.dll to your plugins folder ("Casualties Unknown Demo/BepInEx/plugins")
+
+#### Usage
+
+This is a client-side only mod. It should not do anything if you're the host, since the host is always in-sync with the server.
+
+This fix has not yet been tested thoroughly.
