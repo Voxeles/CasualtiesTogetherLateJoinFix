@@ -2,7 +2,7 @@
 
 Casualties: Unknown multiplayer mod: https://www.nexusmods.com/scavprototype/mods/67
 
-Lazy, potentially buggy, fix for the bug where players who joined mid-layer cannot be spectated, their distance isn't shown on the pause screen, and their death doesn't register on the sidebar.
+An experimental fix for the bug where players who joined mid-layer cannot be spectated, their distance isn't shown on the pause screen, and their death doesn't register on the sidebar.
 
 *This mod is experimental!*
 
