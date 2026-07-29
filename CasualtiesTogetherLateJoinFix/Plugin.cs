@@ -1,5 +1,6 @@
 ﻿using BepInEx;
 using BepInEx.Logging;
+using HarmonyLib;
 using KrokoshaCasualtiesMP;
 using KrokoshaCasualtiesUtils;
 using UnityEngine;
@@ -22,7 +23,8 @@ public class Plugin : BaseUnityPlugin
     private void Awake()
     {
         Logger = base.Logger;
-        if (!KrokoshaCasualtiesMP.MyPluginInfo.PLUGIN_VERSION.Equals("4.0.1"))
+        var mpModVersion = (string)AccessTools.Field(typeof(KrokoshaCasualtiesMP.Plugin), nameof(KrokoshaCasualtiesMP.Plugin.MOD_VERSION)).GetValue(null);
+        if (!mpModVersion.Equals("4.0.1"))
         {
             Logger.LogFatal($"This mod {ModName} is intended ONLY for the v4.0.1 version of the multiplayer mod!!! Uninstall me ({ModName}) NOW!!!");
             return;
