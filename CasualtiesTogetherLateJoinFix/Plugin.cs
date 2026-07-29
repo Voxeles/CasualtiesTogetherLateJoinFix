@@ -17,17 +17,26 @@ public class Plugin : BaseUnityPlugin
     
     private float _timer = 0;
     private int _attempts = 0;
+    private bool _loaded = false;
     
     private void Awake()
     {
         Logger = base.Logger;
+        if (!KrokoshaCasualtiesMP.MyPluginInfo.PLUGIN_VERSION.Equals("4.0.1"))
+        {
+            Logger.LogFatal($"This mod {ModName} is intended ONLY for the v4.0.1 version of the multiplayer mod!!! Uninstall me ({ModName}) NOW!!!");
+            return;
+        }
         WorldgenPatches.OnWorldgenFinish += OnWorldgenFinish;
         NetPlayer.OnPlayerJoined += OnPlayerJoined;
         Logger.LogInfo($"Plugin {ModName} is loaded!");
+        _loaded = true;
     }
 
     private void OnDestroy()
     {
+        if (!_loaded)
+            return;
         WorldgenPatches.OnWorldgenFinish -= OnWorldgenFinish;
         NetPlayer.OnPlayerJoined -= OnPlayerJoined;
     }
@@ -46,6 +55,9 @@ public class Plugin : BaseUnityPlugin
 
     private void LateUpdate()
     {
+        if (!_loaded)
+            return;
+        
         if (!Net.running || Net.is_host || !Util.IsWorldGenerated())
             return;
         
