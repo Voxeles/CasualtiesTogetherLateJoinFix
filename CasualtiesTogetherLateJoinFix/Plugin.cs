@@ -81,14 +81,17 @@ public class Plugin : BaseUnityPlugin
         }
         
         Logger.LogWarning("Attempting to fix player-body desync!");
+        ConsoleScript.instance.LogToConsole("<color=yellow>LateJoinFix: Attempting to fix player-body desync!</color>");
         _attempts += 1;
         
         var bodies = FindObjectsByType<Body>(FindObjectsSortMode.None);
         var netBodies = FindObjectsByType<NetBody>(FindObjectsSortMode.None);
         Logger.LogInfo($"Players: {NetPlayer.ClientIdToPlayerDict.Count}, bodies: {NetPlayer.BodyToPlayerDict.Count}, Body objects: {bodies.Length}, NetBody objects: {netBodies.Length}, NetBody.all_instances: {NetBody.all_instances.Count}.");
+        ConsoleScript.instance.LogToConsole($"LateJoinFix: Players: {NetPlayer.ClientIdToPlayerDict.Count}, bodies: {NetPlayer.BodyToPlayerDict.Count}, Body objects: {bodies.Length}, NetBody objects: {netBodies.Length}, NetBody.all_instances: {NetBody.all_instances.Count}.");
         if (bodies.Length != netBodies.Length)
         {
             Logger.LogError($"Bodies ({bodies.Length}) and netBodies ({netBodies.Length}) doesn't match!");
+            ConsoleScript.instance.LogToConsole($"LateJoinFix: Bodies ({bodies.Length}) and netBodies ({netBodies.Length}) doesn't match!");
             return;
         }
         foreach (var netBody in netBodies)
@@ -96,6 +99,7 @@ public class Plugin : BaseUnityPlugin
             if (!netBody.player)
             {
                 Logger.LogError($"{netBody.name} doesn't have a player!");
+                ConsoleScript.instance.LogToConsole($"LateJoinFix: {netBody.name} doesn't have a player!");
                 continue;
             }
 
@@ -105,6 +109,7 @@ public class Plugin : BaseUnityPlugin
             {
                 NetBody.all_instances.Add(netBody);
                 Logger.LogInfo($"Added {netBody.player.playername}'s netBody to all_instances");
+                ConsoleScript.instance.LogToConsole($"LateJoinFix: Added {netBody.player.playername}'s netBody to all_instances");
                 didSomething = true;
             }
             
@@ -112,6 +117,7 @@ public class Plugin : BaseUnityPlugin
             {
                 NetPlayer.BodyToPlayerDict.Add(netBody.body, netBody.player);
                 Logger.LogInfo($"Added {netBody.player.playername}'s netBody to BodyToPlayerDict");
+                ConsoleScript.instance.LogToConsole($"LateJoinFix: Added {netBody.player.playername}'s netBody to BodyToPlayerDict");
                 didSomething = true;
             }
             
@@ -119,11 +125,15 @@ public class Plugin : BaseUnityPlugin
             {
                 netBody.player.body = netBody.body;
                 Logger.LogInfo($"Assigned {netBody.player.playername}'s netBody.body to their player.body");
+                ConsoleScript.instance.LogToConsole($"LateJoinFix: Assigned {netBody.player.playername}'s netBody.body to their player.body");
                 didSomething = true;
             }
-            
+
             if (didSomething)
+            {
                 Logger.LogMessage($"Adjusted player {netBody.player.playername}!");
+                ConsoleScript.instance.LogToConsole($"<b>LateJoinFix: Adjusted player {netBody.player.playername}!</b>");
+            }
         }
 
         _timer = 0;
@@ -136,16 +146,19 @@ public class Plugin : BaseUnityPlugin
         
         if (!NetPlayer.TryGetPlayerFromClientId(clientId, out NetPlayer player))
         {
-            Logger.LogWarning($"Got a sync packet for clientId {clientId}, but no such player with this ID exists!");
+            Logger.LogError($"Got a sync packet for clientId {clientId}, but no such player with this ID exists!");
+            ConsoleScript.instance.LogToConsole($"<color=red>LateJoinFix: Got a sync packet for clientId {clientId}, but no such player with this ID exists!</color>");
             return;
         }
         
         Logger.LogWarning($"Got a sync packet for client {clientId} ({player.playername}) with no body, attempting to make one.");
+        ConsoleScript.instance.LogToConsole($"<color=yellow>LateJoinFix: Got a sync packet for client {clientId} ({player.playername}) with no body, attempting to make one.</color>");
 
         var pb = NetBody.CreateNewPlayerCharacter(player);
         pb.netId = clientId;
         packet.Apply(pb);
         Logger.LogMessage($"Applied packet for {pb.playername}");
+        ConsoleScript.instance.LogToConsole($"<b>LateJoinFix: Applied packet for {pb.playername}</b>");
     }
 }
 
