@@ -141,7 +141,7 @@ public class Plugin : BaseUnityPlugin
 
     private static void PrintMessage(string message)
     {
-        Logger.LogWarning(message);
+        Logger.LogMessage(message);
         ConsoleScript.instance.LogToConsole($"[{ModName}]: {message}");
     }
 }
