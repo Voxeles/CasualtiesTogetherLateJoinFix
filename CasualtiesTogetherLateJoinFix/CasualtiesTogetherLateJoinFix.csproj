@@ -1,9 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net48</TargetFramework>
+    <BepInExPluginGuid>cump.latejoin.maybefix</BepInExPluginGuid>
+    <ProjectName>CasualtiesTogetherLateJoinFix</ProjectName>
+    <Version>0.0.3</Version>
     <AssemblyName>$(ProjectName)</AssemblyName>
     <Product>$(ProjectName)</Product>
-    <Version>0.0.2</Version>
+    <BepInExPluginName>$(ProjectName)</BepInExPluginName>
+    <BepInExPluginVersion>$(Version)</BepInExPluginVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
     <RestoreAdditionalProjectSources>

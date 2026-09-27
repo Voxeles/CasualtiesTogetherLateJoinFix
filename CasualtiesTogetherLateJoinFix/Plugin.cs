@@ -8,14 +8,14 @@ using UnityEngine;
 
 namespace CasualtiesTogetherLateJoinFix;
 
-[BepInPlugin(ModGuid, ModName, ModVersion)]
+[BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
 public class Plugin : BaseUnityPlugin
 {
-    public const string ModGuid = "cump.latejoin.maybefix";
-    public const string ModName = "CasualtiesTogetherLateJoinFix";
-    public const string ModVersion = "0.0.2";
+    public const string ModGuid = MyPluginInfo.PLUGIN_GUID;
+    public const string ModName = MyPluginInfo.PLUGIN_NAME;
+    public const string ModVersion = MyPluginInfo.PLUGIN_VERSION;
 
-    internal static new ManualLogSource Logger;
+    internal new static ManualLogSource Logger;
     
     private readonly Harmony _harmony = new(ModGuid);
     
@@ -26,10 +26,12 @@ public class Plugin : BaseUnityPlugin
     private void Awake()
     {
         Logger = base.Logger;
+        // The MOD_VERSION field is const, which means its load will be optimized out during build time
+        // We want to get the MOD_VERSION value of the installed MP mod during runtime
         var mpModVersion = (string)AccessTools.Field(typeof(KrokoshaCasualtiesMP.Plugin), nameof(KrokoshaCasualtiesMP.Plugin.MOD_VERSION)).GetValue(null);
-        if (!mpModVersion.Equals("4.0.1"))
+        if (!mpModVersion.StartsWith("4."))
         {
-            Logger.LogFatal($"This mod {ModName} is intended ONLY for the v4.0.1 version of the multiplayer mod!!! Uninstall me ({ModName}) NOW!!!");
+            Logger.LogFatal($"This mod {ModName} is intended ONLY for the v4 version of the multiplayer mod!!! Uninstall me ({ModName}) NOW!!!");
             return;
         }
         WorldgenPatches.OnWorldgenFinish += OnWorldgenFinish;
@@ -80,26 +82,22 @@ public class Plugin : BaseUnityPlugin
             return;
         }
         
-        Logger.LogWarning("Attempting to fix player-body desync!");
-        ConsoleScript.instance.LogToConsole("<color=yellow>LateJoinFix: Attempting to fix player-body desync!</color>");
+        PrintWarning("Attempting to fix player-body desync!");
         _attempts += 1;
         
         var bodies = FindObjectsByType<Body>(FindObjectsSortMode.None);
         var netBodies = FindObjectsByType<NetBody>(FindObjectsSortMode.None);
-        Logger.LogInfo($"Players: {NetPlayer.ClientIdToPlayerDict.Count}, bodies: {NetPlayer.BodyToPlayerDict.Count}, Body objects: {bodies.Length}, NetBody objects: {netBodies.Length}, NetBody.all_instances: {NetBody.all_instances.Count}.");
-        ConsoleScript.instance.LogToConsole($"LateJoinFix: Players: {NetPlayer.ClientIdToPlayerDict.Count}, bodies: {NetPlayer.BodyToPlayerDict.Count}, Body objects: {bodies.Length}, NetBody objects: {netBodies.Length}, NetBody.all_instances: {NetBody.all_instances.Count}.");
+        PrintMessage($"Players: {NetPlayer.ClientIdToPlayerDict.Count}, bodies: {NetPlayer.BodyToPlayerDict.Count}, Body objects: {bodies.Length}, NetBody objects: {netBodies.Length}, NetBody.all_instances: {NetBody.all_instances.Count}.");
         if (bodies.Length != netBodies.Length)
         {
-            Logger.LogError($"Bodies ({bodies.Length}) and netBodies ({netBodies.Length}) doesn't match!");
-            ConsoleScript.instance.LogToConsole($"LateJoinFix: Bodies ({bodies.Length}) and netBodies ({netBodies.Length}) doesn't match!");
+            PrintWarning($"Bodies ({bodies.Length}) and netBodies ({netBodies.Length}) doesn't match!");
             return;
         }
         foreach (var netBody in netBodies)
         {
             if (!netBody.player)
             {
-                Logger.LogError($"{netBody.name} doesn't have a player!");
-                ConsoleScript.instance.LogToConsole($"LateJoinFix: {netBody.name} doesn't have a player!");
+                PrintWarning($"{netBody.name} doesn't have a player!");
                 continue;
             }
 
@@ -108,57 +106,42 @@ public class Plugin : BaseUnityPlugin
             if (!NetBody.all_instances.Contains(netBody))
             {
                 NetBody.all_instances.Add(netBody);
-                Logger.LogInfo($"Added {netBody.player.playername}'s netBody to all_instances");
-                ConsoleScript.instance.LogToConsole($"LateJoinFix: Added {netBody.player.playername}'s netBody to all_instances");
+                PrintMessage($"Added {netBody.player.playername}'s netBody to all_instances");
                 didSomething = true;
             }
             
             if (!NetPlayer.BodyToPlayerDict.ContainsKey(netBody.body))
             {
                 NetPlayer.BodyToPlayerDict.Add(netBody.body, netBody.player);
-                Logger.LogInfo($"Added {netBody.player.playername}'s netBody to BodyToPlayerDict");
-                ConsoleScript.instance.LogToConsole($"LateJoinFix: Added {netBody.player.playername}'s netBody to BodyToPlayerDict");
+                PrintMessage($"Added {netBody.player.playername}'s netBody to BodyToPlayerDict");
                 didSomething = true;
             }
             
             if (netBody.player.body == null)
             {
                 netBody.player.body = netBody.body;
-                Logger.LogInfo($"Assigned {netBody.player.playername}'s netBody.body to their player.body");
-                ConsoleScript.instance.LogToConsole($"LateJoinFix: Assigned {netBody.player.playername}'s netBody.body to their player.body");
+                PrintMessage($"Assigned {netBody.player.playername}'s netBody.body to their player.body");
                 didSomething = true;
             }
 
             if (didSomething)
             {
-                Logger.LogMessage($"Adjusted player {netBody.player.playername}!");
-                ConsoleScript.instance.LogToConsole($"<b>LateJoinFix: Adjusted player {netBody.player.playername}!</b>");
+                PrintMessage($"<b>LateJoinFix: Adjusted player {netBody.player.playername}!</b>");
             }
         }
 
         _timer = 0;
     }
 
-    public static void HandleMissingPlayerForNetBody(knetid clientId, NetBodySyncPacket packet)
+    private static void PrintWarning(string message)
     {
-        if (Util.IsGeneratingWorld() || !Util.IsInWorld())
-            return;
-        
-        if (!NetPlayer.TryGetPlayerFromClientId(clientId, out NetPlayer player))
-        {
-            Logger.LogError($"Got a sync packet for clientId {clientId}, but no such player with this ID exists!");
-            ConsoleScript.instance.LogToConsole($"<color=red>LateJoinFix: Got a sync packet for clientId {clientId}, but no such player with this ID exists!</color>");
-            return;
-        }
-        
-        Logger.LogWarning($"Got a sync packet for client {clientId} ({player.playername}) with no body, attempting to make one.");
-        ConsoleScript.instance.LogToConsole($"<color=yellow>LateJoinFix: Got a sync packet for client {clientId} ({player.playername}) with no body, attempting to make one.</color>");
+        Logger.LogWarning(message);
+        ConsoleScript.instance.LogToConsole($"<color=yellow>[{ModName}]: {message}</color>");
+    }
 
-        var pb = NetBody.CreateNewPlayerCharacter(player);
-        pb.netId = clientId;
-        packet.Apply(pb);
-        Logger.LogMessage($"Applied packet for {pb.playername}");
-        ConsoleScript.instance.LogToConsole($"<b>LateJoinFix: Applied packet for {pb.playername}</b>");
+    private static void PrintMessage(string message)
+    {
+        Logger.LogWarning(message);
+        ConsoleScript.instance.LogToConsole($"[{ModName}]: {message}");
     }
 }
-
