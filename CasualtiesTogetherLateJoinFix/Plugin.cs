@@ -126,7 +126,7 @@ public class Plugin : BaseUnityPlugin
 
             if (didSomething)
             {
-                PrintMessage($"<b>LateJoinFix: Adjusted player {netBody.player.playername}!</b>");
+                PrintMessage($"<b>Adjusted player {netBody.player.playername}!</b>");
             }
         }
 
